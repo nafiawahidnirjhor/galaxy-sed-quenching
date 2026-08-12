@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Scientific outputs
+results/
+figures/
+logs/
+
+# Large/local data
+data/raw/
+data/processed/
+data/mock/
+
+# BAGPIPES / sampler outputs
+*.h5
+*.hdf5
+*.npz
+*.pkl
+
+# Secrets
+.env
+*.key
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
