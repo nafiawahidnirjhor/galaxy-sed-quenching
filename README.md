@@ -1,4 +1,31 @@
-# Galaxy SED Quenching Tool
+## Application Screenshots
+
+### Application Interface
+![Application interface](figures/app_interface.png)
+
+### Galaxy Selection
+![Galaxy selection](figures/app_select.png)
+
+### SED Fitting
+![SED fitting](figures/app_fitting.png)
+
+### Galaxy Results
+![Galaxy results](figures/app_result.png)
+
+### Detailed Results
+![Detailed results](figures/app_result2.png)
+
+### Summary
+![Analysis summary](figures/app_summary.png)
+
+### Star Formation History
+![Star formation history](figures/app_plot.png)
+
+### Additional SFH Visualization
+![Additional SFH visualization](figures/app_plot2.png)
+
+### Result View
+![Result view](figures/app_r3.png)# Galaxy SED Quenching Tool
 
 A Python and Streamlit application for fitting galaxy spectral energy distributions (SEDs) with **BAGPIPES** and estimating star-formation history and quenching diagnostics from SDSS broadband photometry.
 
