@@ -1,58 +1,76 @@
-## Application Screenshots
+# Galaxy SED Quenching Tool
 
-### Application Interface
+A Python and Streamlit application for fitting galaxy Spectral Energy Distributions (SEDs) with BAGPIPES and interpreting delayed-τ star-formation histories.
+
+The tool accepts SDSS broadband photometry, performs SED fitting, derives star-formation diagnostics, reconstructs the fitted SFH, and provides an interpretable classification of the galaxy's current star-formation state.
+
 ![Application interface](figures/app_interface.png)
 
-### Galaxy Selection
-![Galaxy selection](figures/app_select.png)
+## Scientific Goal
 
-### SED Fitting
-![SED fitting](figures/app_fitting.png)
+This project focuses on understanding the star-formation state of galaxies through broadband SED fitting.
 
-### Galaxy Results
-![Galaxy results](figures/app_result.png)
+The analysis specifically investigates:
 
-### Detailed Results
-![Detailed results](figures/app_result2.png)
+* Star-formation history (SFH)
+* Stellar population age
+* Stellar mass
+* Star-formation rate (SFR)
+* Specific star-formation rate (sSFR)
+* Delayed-τ timescale
+* Peak SFR
+* Current-to-peak SFR ratio
+* Time since the SFH peak
 
-### Summary
-![Analysis summary](figures/app_summary.png)
+The resulting classification is an SED-based diagnostic and does not by itself prove that star formation has completely stopped.
 
-### Star Formation History
-![Star formation history](figures/app_plot.png)
+## Analysis Workflow
 
-### Additional SFH Visualization
-![Additional SFH visualization](figures/app_plot2.png)
+```text
+SDSS Photometric Catalogue
+          ↓
+Catalogue Validation
+          ↓
+Magnitude → Flux Conversion
+          ↓
+BAGPIPES SED Fitting
+          ↓
+Posterior Parameter Extraction
+          ↓
+Delayed-τ SFH Reconstruction
+          ↓
+SFR and Quenching Diagnostics
+          ↓
+Galaxy Classification
+          ↓
+Streamlit Results Interface
+```
 
-### Result View
-![Result view](figures/app_r3.png)# Galaxy SED Quenching Tool
+## Model
 
-A Python and Streamlit application for fitting galaxy spectral energy distributions (SEDs) with **BAGPIPES** and estimating star-formation history and quenching diagnostics from SDSS broadband photometry.
+The project uses a delayed-τ star-formation history:
 
-## What this project does
+```text
+SFR(t) ∝ t exp(-t/τ)
+```
 
-The application takes SDSS `u,g,r,i,z` photometry and redshift for a galaxy, performs a delayed-τ SED fit, derives physical star-formation quantities, and classifies the galaxy according to its current activity relative to its fitted peak SFR.
-
-Main outputs:
+The fitted model includes:
 
 * Stellar population age
 * Delayed-τ timescale
 * Formed stellar mass
-* Current SFR
-* Peak SFR
-* Specific SFR
-* Current-to-peak SFR ratio
-* Time since SFH peak
-* Delayed-τ SFH plot
-* Qualitative star-formation state
+* Stellar metallicity
+* Calzetti dust attenuation
+* Nebular emission
+* Galaxy redshift
 
-The quenching classification is based on the fitted delayed-τ SFH and should be interpreted as a model-based diagnostic, not proof that star formation has completely stopped.
+BAGPIPES performs the SED fitting and produces posterior distributions for the fitted parameters.
 
-## Input file
+## Input Data
 
-The application currently accepts **CSV files only**.
+The application accepts an SDSS photometric catalogue in **CSV format**.
 
-The uploaded catalogue must contain these columns:
+The catalogue must contain these columns:
 
 ```text
 objID
@@ -69,107 +87,134 @@ modelMagErr_i
 modelMagErr_z
 ```
 
-`objID` must be a valid integer SDSS object identifier.
+The current pipeline therefore requires:
 
-`z` is the galaxy redshift.
+* SDSS `u`, `g`, `r`, `i`, `z` photometry
+* Model magnitudes
+* Magnitude uncertainties
+* Galaxy redshift
+* Unique integer `objID`
 
-`modelMag_*` contains SDSS model magnitudes.
+The application validates the required columns and photometric values before fitting.
 
-`modelMagErr_*` contains the corresponding magnitude uncertainties.
+## Results
 
-The application can handle the SDSS catalogue format used in this project, including files containing an initial metadata/comment line.
+For each selected galaxy, the application reports the main fitted and derived quantities.
 
-## Installation
+### Stellar Population
 
-This project was developed with Python 3.10.
-
-Create the environment:
-
-```bash
-conda env create -f environment.yml
-conda activate bagpipes_env
-```
-
-Alternatively, install the Python dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-## Run the web application
-
-From the project root:
-
-```bash
-streamlit run app.py
-```
-
-Then open the local Streamlit URL shown in the terminal.
-
-## Using the application
-
-1. Upload a compatible SDSS CSV file.
-2. Confirm that the detected galaxy count is correct.
-3. Select an SDSS galaxy ID.
-4. Click **Run SED Fit**.
-5. Wait for BAGPIPES to complete the posterior sampling.
-6. Inspect the fitted parameters, diagnostics, SFH plot, and interpretation.
-
-SED fitting can take significantly longer than ordinary Python calculations because BAGPIPES performs Bayesian posterior sampling.
-
-## Scientific model
-
-The project uses a delayed-τ star-formation history:
-
-```text
-SFR(t) ∝ t exp(-t/τ)
-```
-
-The SFH rises initially, reaches a maximum near `t = τ`, and then declines.
-
-The fitting model includes:
-
-* Delayed-τ SFH
+* Stellar mass
 * Stellar population age
-* Stellar mass formed
-* Metallicity
-* Calzetti dust attenuation
-* Nebular emission
-* Fixed galaxy redshift
+* Stellar metallicity
+* Dust attenuation
 
-The current implementation uses SDSS `u,g,r,i,z` broadband photometry rather than spectroscopy.
+### Star Formation
 
-## Quenching diagnostic
+* Current SFR
+* Specific SFR
+* Peak SFR
+* Current / peak SFR
+* Time since SFH peak
+* Delayed-τ timescale
 
-The main activity indicator is:
-
-```text
-Current SFR / Peak SFR
-```
-
-The current classification is:
+The specific SFR is calculated as:
 
 ```text
-ratio >= 0.50    Actively star-forming
-ratio >= 0.10    Moderately declining
-ratio >= 0.01    Strongly declining
-ratio <  0.01    Strongly quenched-like
+sSFR = SFR / stellar mass
 ```
 
-These thresholds are project-defined diagnostic categories rather than universal astrophysical definitions of quenching.
+The current-to-peak SFR ratio is:
 
-## Project structure
+```text
+current / peak SFR = current SFR / peak SFR
+```
+
+This ratio is used as a simple indicator of how strongly the current star-formation activity has declined relative to the fitted peak.
+
+## Star-Formation Classification
+
+The application currently uses the following diagnostic thresholds:
+
+| Current / Peak SFR | Classification         |
+| -----------------: | ---------------------- |
+|             ≥ 0.50 | Actively star-forming  |
+|          0.10–0.50 | Moderately declining   |
+|          0.01–0.10 | Strongly declining     |
+|             < 0.01 | Strongly quenched-like |
+
+These thresholds are project-defined diagnostic categories, not universal physical definitions of galaxy quenching.
+
+## Technical Implementation
+
+The main Python modules are separated by function:
+
+```text
+src/
+├── fitting.py
+├── sfh.py
+├── diagnostics.py
+├── interpretation.py
+├── pipeline.py
+└── plotting.py
+```
+
+### `fitting.py`
+
+Handles:
+
+* SDSS catalogue loading
+* Input validation
+* Magnitude-to-flux conversion
+* BAGPIPES galaxy construction
+* SED fitting
+* Posterior extraction
+* Posterior file reading
+
+### `sfh.py`
+
+Contains the delayed-τ SFH calculation used to reconstruct the star-formation history.
+
+### `diagnostics.py`
+
+Derives:
+
+* Stellar mass
+* Current SFR
+* sSFR
+* Peak SFR
+* Current-to-peak SFR
+* Time since SFH peak
+
+### `interpretation.py`
+
+Converts the numerical diagnostics into an accessible description of the galaxy's star-formation state.
+
+### `pipeline.py`
+
+Connects posterior extraction, diagnostics, and SFH visualization into a single analysis workflow.
+
+### `plotting.py`
+
+Generates SFH visualizations from the fitted parameters.
+
+### `app.py`
+
+Provides the Streamlit web interface for uploading catalogues, selecting galaxies, running fits, and displaying results.
+
+## Repository Structure
 
 ```text
 galaxy-sed-quenching/
 │
 ├── app.py
+├── README.md
 ├── requirements.txt
 ├── environment.yml
 ├── CITATION.cff
-├── README.md
+├── .gitignore
 │
 ├── src/
+│   ├── __init__.py
 │   ├── fitting.py
 │   ├── sfh.py
 │   ├── diagnostics.py
@@ -188,85 +233,153 @@ galaxy-sed-quenching/
 │   ├── test8_plot_sfh.py
 │   ├── test9_mock_generation.py
 │   ├── test10_fit_mock.py
-│   └── additional diagnostic tests
-│
-├── data/
-│   ├── raw/
-│   └── filters/
+│   ├── test_backend_fit.py
+│   ├── test_diagnostics.py
+│   ├── test_pipeline.py
+│   ├── test_plotting.py
+│   └── test_posterior_backend.py
 │
 ├── figures/
-├── pipes/
 └── logs/
 ```
 
-## Code overview
+## Installation
 
-`app.py`
-Streamlit interface for catalogue upload, galaxy selection, fitting, diagnostics, plotting, and interpretation.
+The project was developed using Python 3.10 and a dedicated Conda environment.
 
-`src/fitting.py`
-Validates SDSS input, converts magnitudes to fluxes, constructs the BAGPIPES galaxy object, runs the SED fit, and reads posterior products.
+Create the environment with:
 
-`src/sfh.py`
-Implements the delayed-τ SFH model.
+```bash
+conda env create -f environment.yml
+conda activate bagpipes_env
+```
 
-`src/diagnostics.py`
-Calculates stellar mass, current SFR, peak SFR, sSFR, current-to-peak SFR, and time since the SFH peak.
+Or install the required Python packages with:
 
-`src/pipeline.py`
-Connects posterior extraction, physical diagnostics, and SFH plotting.
+```bash
+pip install -r requirements.txt
+```
 
-`src/interpretation.py`
-Converts the numerical diagnostics into a short qualitative description of the galaxy's star-formation state.
+## Main Dependencies
 
-`src/plotting.py`
-Generates SFH visualizations.
+```text
+Python 3.10
+BAGPIPES 1.3.5
+Streamlit 1.61.1
+NumPy 2.2.0
+Pandas 2.3.3
+Matplotlib 3.10.8
+Astropy 6.1.7
+SciPy 1.15.3
+h5py 3.16.0
+Nautilus Sampler 1.0.6
+Spectres 2.2.2
+Corner 2.2.3
+```
 
-`tests/`
-Contains development and validation scripts covering individual components, BAGPIPES fitting, posterior handling, SFH recovery, diagnostics, and the application pipeline.
+## Running the Application
 
-## Validation
+From the project root:
 
-The project includes controlled delayed-τ mock-data tests and successful SDSS BAGPIPES fitting tests.
+```bash
+streamlit run app.py
+```
 
-The repository also contains example posterior products and SFH figures generated during development.
+Then:
 
-## Main technologies
+1. Upload a compatible SDSS CSV catalogue.
+2. Select a galaxy from the detected `objID` values.
+3. Click **Run SED Fit**.
+4. Wait for BAGPIPES to complete the posterior fitting.
+5. Inspect the fitted parameters, diagnostics, SFH plot, and interpretation.
 
-* Python
-* BAGPIPES
-* Streamlit
-* NumPy
-* Pandas
-* Astropy
-* SciPy
-* Matplotlib
-* HDF5 / h5py
-* Nautilus sampler
+## Screenshots
 
-## Scientific scope and limitations
+### Galaxy Selection
 
-This is a broadband SED-fitting project focused on star-formation history and quenching diagnostics.
+![Galaxy selection](figures/app_select.png)
 
-The current version does not establish:
+### SED Fitting
 
-* A spectroscopically confirmed quenching event
-* A causal mechanism for quenching
-* AGN-driven quenching
-* Environmental quenching
-* A statistically complete population-level quenching relation
+![SED fitting](figures/app_fitting.png)
 
-The inferred quantities depend on the assumed stellar population model, SFH parameterization, dust prescription, photometric quality, redshift, filter curves, and posterior sampling.
+### Galaxy Results
 
-## Reproducibility
+![Galaxy results](figures/app_result.png)
 
-The repository records the main software dependencies, analysis modules, tests, figures, posterior products, and development logs required to reproduce the current workflow.
+### Detailed Results
 
-For a new analysis, use a compatible SDSS photometric CSV, install the specified environment, and launch the Streamlit application from the project root.
+![Detailed results](figures/app_result2.png)
 
-## Author
+### Summary
 
-**Nafia Wahid Nirjhor**
-B.Sc. Physics, Khulna University
-Bangladesh
+![Analysis summary](figures/app_summary.png)
 
+### Star-Formation History
+
+![SFH plot](figures/app_plot.png)
+
+### Additional SFH Plot
+
+![Additional SFH plot](figures/app_plot2.png)
+
+### Results View
+
+![Results view](figures/app_r3.png)
+
+## Validation and Testing
+
+The project includes tests and controlled experiments covering:
+
+* SDSS photometric input validation
+* BAGPIPES galaxy construction
+* Posterior extraction
+* Delayed-τ SFH reconstruction
+* SFR calculations
+* Quenching classification
+* SFH plotting
+* Backend fitting
+* Mock delayed-τ photometry
+* Mock parameter recovery
+* End-to-end pipeline behaviour
+
+Controlled mock-data tests were also used to verify whether the fitting pipeline could recover known delayed-τ parameters.
+
+## Limitations
+
+The current implementation has several important limitations.
+
+It uses five-band SDSS broadband photometry and a single delayed-τ SFH parameterization. Real galaxy SFHs can be more complex than this model.
+
+The quenching classification depends on the assumed SFH model and project-defined thresholds.
+
+The derived SFR and stellar population properties are therefore model-dependent estimates rather than direct measurements.
+
+More robust physical conclusions would benefit from additional photometric bands, spectroscopy, alternative SFH models, independent SFR indicators, and a larger statistically selected galaxy sample.
+
+## Project Status
+
+**Functional research prototype**
+
+The repository currently contains:
+
+* A working Streamlit application
+* SDSS catalogue validation
+* BAGPIPES SED fitting
+* Delayed-τ SFH modelling
+* Posterior analysis
+* SFR and quenching diagnostics
+* SFH visualization
+* Mock-data validation
+* Automated tests
+* Reproducible environment specifications
+
+The project is intended as a research and educational prototype for exploring galaxy star-formation histories through SED fitting.
+
+## Citation
+
+If you use this project or its code in research, please refer to the citation information provided in `CITATION.cff`.
+
+## License
+
+See the repository license information for usage and redistribution terms.
